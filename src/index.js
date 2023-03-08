@@ -1,11 +1,24 @@
-const ul = document.querySelector("ul");
-const input = document.querySelector("input");
-const form = document.querySelector("form");
-
 import { legacy_createStore as createStore } from "redux";
 
 const ADD = "add";
 const DELETE = "delete";
+
+const ul = document.querySelector("ul");
+const input = document.querySelector("input");
+const form = document.querySelector("form");
+
+const addTodo = (text) => {
+  return {
+    type: ADD,
+    text,
+  };
+};
+const deleteTodo = (id) => {
+  return {
+    type: DELETE,
+    id,
+  };
+};
 
 const reducer = (state = [], action) => {
   switch (action.type) {
@@ -13,8 +26,6 @@ const reducer = (state = [], action) => {
       return [{ text: action.text, id: Date.now() }, ...state];
     case DELETE:
       return state.filter((todo) => {
-        console.log(`actionid : ${typeof action.id}`);
-        console.log(`todo id: ${typeof todo.id}`);
         return todo.id !== action.id;
       });
     default:
@@ -23,24 +34,21 @@ const reducer = (state = [], action) => {
 };
 const store = createStore(reducer);
 
-const onClick = (event) => {
-  event.preventDefault();
-  store.dispatch({ type: ADD, text: input.value });
-  input.value = "";
-  console.log(store.getState());
-  updateTodos();
+const addTodoDispatch = (text) => {
+  store.dispatch(addTodo(text));
+};
+const deleteTodoDispatch = (id) => {
+  store.dispatch(deleteTodo(id));
 };
 
 const onDelete = (event) => {
   event.preventDefault();
   const id = parseInt(event.target.parentNode.id);
-  store.dispatch({ type: DELETE, id });
-  updateTodos();
+  deleteTodoDispatch(id);
+  paintTodos();
 };
 
-form.addEventListener("submit", onClick);
-
-const updateTodos = () => {
+const paintTodos = () => {
   const todos = store.getState();
   ul.innerHTML = "";
   todos.map((todo) => {
@@ -55,6 +63,13 @@ const updateTodos = () => {
   });
 };
 
-store.subscribe(() => {
-  store.getState();
-});
+store.subscribe(paintTodos);
+
+const onSubmit = (event) => {
+  event.preventDefault();
+  addTodoDispatch(input.value);
+  input.value = "";
+  paintTodos();
+};
+
+form.addEventListener("submit", onSubmit);
